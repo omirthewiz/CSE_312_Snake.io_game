@@ -1,0 +1,43 @@
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+      - auth
+
+  app:                         # main game app (Person 3 + You)
+    build: ./app
+    volumes:
+      - pubkey:/pub:ro         # reads the PUBLIC key only
+    depends_on:
+      - auth
+
+  auth:                        # separate auth server (Person 2)
+    build: ./auth
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=snake
+      - POSTGRES_PASSWORD=changeme
+    volumes:
+      - authkeys:/keys         # PRIVATE key lives here (auth only)
+      - pubkey:/pub            # writes the public key for the app
+    depends_on:
+      - db
+
+  db:                          # database (Person 1)
+    image: postgres:16
+    environment:
+      - POSTGRES_DB=snake
+      - POSTGRES_PASSWORD=changeme
+    # NO ports exposed -> DB is not reachable from the internet (security!)
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+
+volumes:
+  authkeys:
+  pubkey:
+  dbdata:

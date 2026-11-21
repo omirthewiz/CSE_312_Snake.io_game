@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+pyjwt
+bcrypt
+psycopg2-binary
+cryptography
